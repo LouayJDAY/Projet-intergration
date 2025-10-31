@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { initDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import cors from 'cors';
+import cronAuth from "./lib/corn.js";
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,14 @@ initDB().then(() => {
   app.listen(PORT, () => {
     console.log("SERVER RUNNING ON PORT:", PORT);
   });
+
+  // Start cron job (if defined)
+  try {
+    cronAuth.start();
+    console.log("Cron job started");
+  } catch (err) {
+    console.warn("Could not start cron job:", err.message || err);
+  }
 }).catch((err) => {
   console.error("❌ Failed to init DB", err);
 });

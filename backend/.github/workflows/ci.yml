@@ -1,0 +1,37 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      run: npm test  # Add tests later if needed
+
+    - name: Build Docker image
+      run: docker build -t backend-app .
+
+    - name: Run Docker container for smoke test
+      run: |
+        docker run -d -p 3000:3000 --name test-container backend-app
+        sleep 10
+        curl -f http://localhost:3000 || exit 1
+        docker stop test-container

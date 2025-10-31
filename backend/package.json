@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -12,12 +13,14 @@
   "description": "",
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "corn": "^0.0.1",
+    "cron": "^2.1.0",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "nodemailer": "^7.0.9",
     "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
   }
 }
