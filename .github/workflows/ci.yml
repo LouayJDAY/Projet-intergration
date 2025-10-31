@@ -1,0 +1,97 @@
+name: CI
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAMESPACE: ${{ github.repository_owner }}/projet-intergration
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Cache backend node modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: backend-node-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            backend-node-
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - name: Cache frontend node modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: frontend-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            frontend-node-
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Login to registry (GHCR via GITHUB_TOKEN)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}:backend-${{ github.sha }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}:frontend-${{ github.sha }}
+
+      - name: Save image tags
+        run: |
+          echo "BACKEND_IMAGE=${REGISTRY}/${IMAGE_NAMESPACE}:backend-${GITHUB_SHA}" >> image-tags.env
+          echo "FRONTEND_IMAGE=${REGISTRY}/${IMAGE_NAMESPACE}:frontend-${GITHUB_SHA}" >> image-tags.env
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAMESPACE: ${{ env.IMAGE_NAMESPACE }}
+          GITHUB_SHA: ${{ github.sha }}
+
+      - name: Upload image tags artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-tags
+          path: image-tags.env
