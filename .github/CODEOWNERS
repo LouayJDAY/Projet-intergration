@@ -1,0 +1,15 @@
+# Code owners for the project
+# These users will be automatically requested for review when someone opens a PR
+
+* @malekbacouch90210
+
+# Backend specific
+/backend/ @malekbacouch90210
+
+# Frontend specific
+/frontend/ @malekbacouch90210
+
+# Infrastructure and DevOps
+/docker-compose.yml @malekbacouch90210
+/.github/ @malekbacouch90210
+Dockerfile @malekbacouch90210
